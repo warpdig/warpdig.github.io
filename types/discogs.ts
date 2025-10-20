@@ -70,6 +70,7 @@ export interface DiscogsRelease {
   uri?: string;
   master_id?: number;
   thumb?: string;
+  videos?: DiscogsVideo[];
 }
 
 export interface DiscogsMasterVersion {
@@ -111,4 +112,11 @@ export interface DiscogsReleaseRelations {
     name: string;
     releases: DiscogsRelatedRelease[];
   }>;
+}
+
+export interface DiscogsVideo {
+  uri: string;
+  title: string;
+  description?: string;
+  duration?: number;
 }

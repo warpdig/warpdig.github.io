@@ -6,7 +6,8 @@ WarpDig er det intuitive laget over Discogs. Fokus for v1 er en prototype som gj
 Prosjektet er et Next.js 15 / React 19-oppsett (App Router, Turbopack) med
 serverless API-ruter som proxyer Discogs-databasen. MVP-en leverer:
 - keyboard-grid for søk og navigasjon
-- detaljpanel med release-info, tracklist og relasjonsnoder (master/label/artist)
+- detaljpanel med release-info, tracklist, YouTube-preview og relasjonsnoder (master/label/artist)
+- tastatursnarveier (`Shift+←/→`) for å bla mellom forhåndslytter
 - in-memory cache for søk/detaljer og forhåndsgenerert forskningsgrunnlag
 
 ### Kom i gang
@@ -36,7 +37,7 @@ default verdien hvis du ikke trenger en annen identifikator.
 - `components/` – søkeopplevelse (SearchShell, SearchBar, RecordCard, RecordDetail).
 - `lib/` – Discogs-klient, cache-håndtering og hjelpefunksjoner.
 - `types/` – TypeScript-typer for Discogs-responser.
-- `research/` – innsiktsgrunnlag (painpoints-tabell, refleksjoner, relasjons-MVP-notater).
+- `research/` – innsiktsgrunnlag (painpoints-tabell, refleksjoner, relasjons- og preview-planer).
 
 ### Videre arbeid
 
@@ -44,7 +45,7 @@ default verdien hvis du ikke trenger en annen identifikator.
 
 - Relasjonell graf for artist ↔ label ↔ relasjoner + anbefalinger.
 - Forsterk cache-laget (i dag in-memory) med varig lagring (SQLite/edge) og eksplisitt rate-limit.
-- Integrer previews (Spotify/YouTube) med hotkeys.
+- Utvid preview-modulen (Spotify fallback, play/pause hotkeys) etter brukertest.
 - Planlegg Make-webhook for tilgjengelighetsvarsler.
 - Availability-alert eksempel: “Oscar, en sang du spiller ofte på Spotify er nå tilgjengelig på Discogs hos en selger som har 10 plater på ønskelisten din, med gode rabatter og frakt til Bergen.” Dette er rettesnoren for automasjonsløpet (Spotify signal → Make webhook → WarpDig alert).
 

@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "s.discogs.com",
       },
+      {
+        protocol: "https",
+        hostname: "st.discogs.com",
+      },
     ],
   },
 };

@@ -10,6 +10,7 @@ import {
   DiscogsReleaseRelations,
   DiscogsSearchPagination,
   DiscogsSearchResult,
+  DiscogsVideo,
 } from "@/types/discogs";
 
 const PER_PAGE = 24;
@@ -49,6 +50,7 @@ export function SearchShell() {
   const [relations, setRelations] = useState<DiscogsReleaseRelations | null>(
     null
   );
+  const [previewIndex, setPreviewIndex] = useState<number>(-1);
 
   const controllerRef = useRef<AbortController | null>(null);
   const detailControllerRef = useRef<AbortController | null>(null);
@@ -110,6 +112,7 @@ export function SearchShell() {
         setDetailState({ status: "idle" });
         setRelations(null);
         setRelationsState({ status: "idle" });
+        setPreviewIndex(-1);
       }
 
       controllerRef.current?.abort();
@@ -200,6 +203,7 @@ export function SearchShell() {
       setSelectedRelease(null);
       setDetailState({ status: "idle" });
       detailControllerRef.current?.abort();
+      setPreviewIndex(-1);
       return;
     }
 
@@ -220,6 +224,8 @@ export function SearchShell() {
         const data = (await response.json()) as DiscogsRelease;
         setSelectedRelease(data);
         setDetailState({ status: "idle" });
+        const videos = data.videos ?? [];
+        setPreviewIndex(videos.length > 0 ? 0 : -1);
       } catch (error) {
         if ((error as Error).name === "AbortError") {
           return;
@@ -290,6 +296,26 @@ export function SearchShell() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!results.length) return;
+      if (event.shiftKey) {
+        const videos = selectedRelease?.videos ?? [];
+        if (videos.length) {
+          if (event.key === "ArrowRight") {
+            event.preventDefault();
+            setPreviewIndex((current) =>
+              current < videos.length - 1 ? current + 1 : 0
+            );
+            return;
+          }
+          if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            setPreviewIndex((current) =>
+              current > 0 ? current - 1 : videos.length - 1
+            );
+            return;
+          }
+        }
+      }
+
       if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key))
         return;
 
@@ -387,8 +413,11 @@ export function SearchShell() {
             errorMessage={
               detailState.status === "error" ? detailState.message : undefined
             }
-            onRelationSearch={handleRelationSearch}
-          />
+        onRelationSearch={handleRelationSearch}
+            previewVideos={selectedRelease?.videos ?? []}
+            previewIndex={previewIndex}
+            onPreviewSelect={(index) => setPreviewIndex(index)}
+      />
         </aside>
       </div>
 

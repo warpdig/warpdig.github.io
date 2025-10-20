@@ -6,7 +6,10 @@ import {
   DiscogsRelease,
   DiscogsReleaseRelations,
   DiscogsSearchResult,
+  DiscogsVideo,
 } from "@/types/discogs";
+
+import { extractYouTubeId } from "@/lib/utils";
 
 interface RecordDetailProps {
   record: DiscogsSearchResult | null;
@@ -17,6 +20,9 @@ interface RecordDetailProps {
   relationsLoading?: boolean;
   relationsError?: string;
   onRelationSearch?: (value: string) => void;
+  previewVideos?: DiscogsVideo[];
+  previewIndex?: number;
+  onPreviewSelect?: (index: number) => void;
 }
 
 export function RecordDetail({
@@ -28,6 +34,9 @@ export function RecordDetail({
   relationsLoading = false,
   relationsError,
   onRelationSearch,
+  previewVideos = [],
+  previewIndex = -1,
+  onPreviewSelect,
 }: RecordDetailProps) {
   const displayTitle = record?.title ?? "Velg en plate";
   const subtitle = useMemo(() => {
@@ -44,6 +53,11 @@ export function RecordDetail({
   const tracklist = release?.tracklist?.slice(0, 10) ?? [];
   const styles = release?.styles ?? record?.style ?? [];
   const genres = release?.genres ?? record?.genre ?? [];
+  const currentPreview =
+    previewIndex >= 0 && previewIndex < previewVideos.length
+      ? previewVideos[previewIndex]
+      : null;
+
   const hasRelationsContent = useMemo(() => {
     if (!relations) return false;
     if (relations.master?.versions?.length) return true;
@@ -168,6 +182,81 @@ export function RecordDetail({
               </p>
             </section>
           ) : null}
+
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-300">
+                Preview
+              </h3>
+              {currentPreview ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.open(currentPreview.uri, "_blank", "noopener")
+                  }
+                  className="rounded-full border border-slate-700 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-slate-300 transition hover:border-emerald-400/60 hover:text-emerald-300"
+                >
+                  Åpne i ny fane
+                </button>
+              ) : null}
+            </div>
+            {previewVideos.length === 0 ? (
+              <p className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-4 text-xs text-slate-400">
+                Ingen offisielle videoer funnet. Åpne Discogs-lenken for å
+                sjekke andre kilder.
+              </p>
+            ) : null}
+
+            {currentPreview ? (
+              <div className="flex flex-col gap-3">
+                <ResponsiveEmbed video={currentPreview} />
+                <div className="flex flex-col gap-1 text-xs text-slate-300">
+                  <span className="font-semibold text-slate-100">
+                    {currentPreview.title}
+                  </span>
+                  {currentPreview.duration ? (
+                    <span className="text-slate-500">
+                      Varighet: {formatDuration(currentPreview.duration)}
+                    </span>
+                  ) : null}
+                  <span className="text-slate-500">
+                    Shift + ← / → for å bytte preview
+                  </span>
+                </div>
+
+                {previewVideos.length > 1 ? (
+                  <div className="flex flex-col gap-2">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                      Flere klipp
+                    </h4>
+                    <div className="flex flex-col gap-1 rounded-2xl border border-slate-800/60 bg-slate-900/40 p-3 text-xs text-slate-300">
+                      {previewVideos.map((video, index) => (
+                        <button
+                          key={`${video.uri}-${index}`}
+                          type="button"
+                          onClick={() => onPreviewSelect?.(index)}
+                          className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left transition ${
+                            index === previewIndex
+                              ? "border border-emerald-400/60 bg-emerald-500/10 text-emerald-200"
+                              : "border border-transparent hover:border-slate-700 hover:bg-slate-800/60"
+                          }`}
+                        >
+                          <span className="text-slate-100">
+                            {video.title}
+                          </span>
+                          {video.duration ? (
+                            <span className="text-[11px] text-slate-500">
+                              {formatDuration(video.duration)}
+                            </span>
+                          ) : null}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
 
           {(relationsLoading || relationsError || hasRelationsContent) && (
             <section className="flex flex-col gap-3">
@@ -335,4 +424,36 @@ function SkeletonLine({ width = "100%" }: { width?: string }) {
       style={{ width }}
     />
   );
+}
+
+function ResponsiveEmbed({ video }: { video: DiscogsVideo }) {
+  const youtubeId = extractYouTubeId(video.uri);
+  if (!youtubeId) {
+    return (
+      <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-4 text-xs text-slate-400">
+        Kan ikke spille av video automatisk. Åpne lenken i ny fane.
+      </div>
+    );
+  }
+
+  const embedUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`;
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-2xl border border-slate-800/60 pb-[56.25%]">
+      <iframe
+        className="absolute inset-0 h-full w-full"
+        src={embedUrl}
+        title={video.title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
+function formatDuration(seconds?: number) {
+  if (!seconds || Number.isNaN(seconds)) return "";
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${minutes}:${rest.toString().padStart(2, "0")}`;
 }
