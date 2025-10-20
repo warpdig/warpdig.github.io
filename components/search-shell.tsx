@@ -314,6 +314,10 @@ export function SearchShell() {
             return;
           }
         }
+        // Hvis Shift holdes men ingen video, skal vi ikke trigge navigasjon.
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          return;
+        }
       }
 
       if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key))
